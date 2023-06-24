@@ -1,0 +1,165 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Cem KARACAER</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+            }
+
+            #source {
+                width: 100%;
+                height: calc(100vh - 40px);
+            }
+
+            ul {
+                border-style: solid;
+                border-width: 1px;
+                margin-top: 34px !important;
+                height: 60vh;
+                overflow: scroll;
+                overflow-x: hidden;
+            }
+
+            li {
+                color: #000;
+                list-style-type: none;
+                font-size: 14px;
+                word-wrap: break-word;
+                padding: 5px;
+            }
+
+            #title {
+                font-size: 20px;
+                font-weight: bold;
+                font-family: Arial, Helvetica, sans-serif;
+                margin: 0 !important;
+                margin-bottom: 10px !important;
+            }
+
+            button {
+                border: none;
+                cursor: pointer;
+                color: #fff;
+                display: inline-block;
+                width: 180px;
+                height: 50px;
+                margin-top: 10px;
+            }
+
+            #turnOnCameraButton {
+                background-color: darkcyan;
+            }
+
+            #getRecommendationsButton {
+                background-color: #4CAF50;
+                margin-left: 10px;
+            }
+
+            .loader {
+                border: 16px solid #f3f3f3;
+                border-top: 16px solid #3498db;
+                border-radius: 50%;
+                width: 120px;
+                height: 120px;
+                animation: spin 2s linear infinite;
+            }
+
+            .ulOrtala {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+            </style>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css">
+        </head>
+        <body>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-8 col-sm-8 col-md-8 col-8">
+                        <h2 id="title">Live Streaming</h2>
+                        <img id="source" src="{{ url_for('video_feed') }}">
+                    </div>
+                    <div class="col-4 col-sm-4 col-md-4 col-4">
+                        <ul id="reclist" class="ulOrtala">
+                            <div class="loader" id="loading"></div>
+                        </ul>
+                        <div style="display:flex; justify-content: center; align-items: center;">
+                            <button id="turnOnCameraButton">Start Detection</button>
+                            <button id="getRecommendationsButton">Get Recommendations</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+        <script>
+            let ul = document.getElementById("reclist");
+            let key = 1;
+
+            let loading = document.getElementById("loading");
+            loading.style.display = "none";
+
+            $(document).ready(function () {
+                $('#getRecommendationsButton').click(function () {
+                    if (key == 1) {
+                        $('#loading').show();
+                        ul.classList.add("ulOrtala");
+                        var lis = document.querySelectorAll('#reclist li');
+                        for(var i=0; li=lis[i]; i++) {
+                            li.parentNode.removeChild(li);
+                        }
+                        ul.appendChild(loading);
+                        $.ajax({
+                            type: "GET",
+                            url: "http://127.0.0.1:5000/get_list", //REQUEST 1
+                            dataType: "json",
+                            success: function (response_data) {
+                                var obj = JSON.parse(response_data.result);
+                                var str = "";
+                                for (var item in obj) {
+                                    str = str + "<li>" + obj[item].track_name + "-" + obj[item].artists + "</li>";
+                                }
+                                var el = document.getElementById("reclist");
+                                el.innerHTML = str;
+                            }, complete: function () {
+                                ul.classList.remove("ulOrtala");
+                                $('#loading').hide();
+                                key = 0;
+                            },
+                            error: function (request, error) {
+                                alert("request failed");
+                                $('#loading').hide();
+                            }
+                        })
+                    }
+                });
+
+                $('#turnOnCameraButton').click(function () {
+                    key = 1;
+                    $.ajax({
+                        type: "POST",
+                        url: "http://127.0.0.1:5000/turn_on_camera", //REQUEST 2
+                        success: function (response_data) {
+                            alert("Camera Started");
+                        },
+                        error: function (request, error) {
+                            alert("Request Failed");
+                        }
+                    })
+                });
+            });
+        </script>
+</html>
